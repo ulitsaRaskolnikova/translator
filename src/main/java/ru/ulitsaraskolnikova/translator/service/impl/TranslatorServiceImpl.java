@@ -11,6 +11,8 @@ import ru.ulitsaraskolnikova.translator.repo.TranslationRepository;
 import ru.ulitsaraskolnikova.translator.service.TranslatorService;
 import ru.ulitsaraskolnikova.translator.client.TranslatorClient;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -47,10 +49,16 @@ public class TranslatorServiceImpl implements TranslatorService {
             if (!responseEntity.getStatusCode().is2xxSuccessful()) {
                 return responseEntity;
             }
-            System.out.println(responseEntity.getBody().message());
             sb.append(responseEntity.getBody().message());
             sb.append(" ");
         }
-        return new ResponseEntity<>(new Response(sb.toString()), HttpStatusCode.valueOf(500));
+        Response response = new Response(sb.toString());
+        try {
+            repository.init();
+            repository.save(request, response, ip);
+        } catch (ClassNotFoundException | SQLException | IOException e) {
+            log.error(e.toString());
+        }
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(200));
     }
 }
