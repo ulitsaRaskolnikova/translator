@@ -46,9 +46,6 @@ public class YandexTranslateClient implements TranslatorClient {
             }
             response = new Response(message);
             responseEntity = new ResponseEntity<>(response, e.getStatusCode());
-        } catch (Exception e) {
-            log.error(e.toString());
-            return null;
         }
         return responseEntity;
     }
