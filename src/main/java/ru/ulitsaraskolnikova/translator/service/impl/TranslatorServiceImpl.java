@@ -25,7 +25,6 @@ public class TranslatorServiceImpl implements TranslatorService {
     private final TranslationRepository repository;
     private final int MAX_COUNT_OF_THREADS = 10;
     private final ExecutorService executorService = Executors.newFixedThreadPool(MAX_COUNT_OF_THREADS);
-    private final Semaphore semaphore = new Semaphore(MAX_COUNT_OF_THREADS);
     @Override
     public ResponseEntity<Response> service(Request request, String ip) {
         String[] words = request.text().strip().split(" +");
@@ -37,6 +36,8 @@ public class TranslatorServiceImpl implements TranslatorService {
             futures.add(future);
         }
         var sb = new StringBuilder();
+        ResponseEntity<Response> responseEntityIfError = null;
+        boolean isError = false;
         for (var future : futures) {
             ResponseEntity<Response> responseEntity;
             try {
@@ -46,10 +47,14 @@ public class TranslatorServiceImpl implements TranslatorService {
                 responseEntity = new ResponseEntity<>(new Response(e.getMessage()), HttpStatusCode.valueOf(500));
             }
             if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-                return responseEntity;
+                isError = true;
+                responseEntityIfError = responseEntity;
             }
             sb.append(responseEntity.getBody().message());
             sb.append(" ");
+        }
+        if (isError) {
+            return responseEntityIfError;
         }
         Response response = new Response(sb.toString().strip());
         try {
