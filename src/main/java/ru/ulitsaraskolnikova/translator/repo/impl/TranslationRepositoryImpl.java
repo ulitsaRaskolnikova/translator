@@ -1,5 +1,6 @@
 package ru.ulitsaraskolnikova.translator.repo.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.ulitsaraskolnikova.translator.model.Request;
@@ -12,6 +13,7 @@ import java.nio.file.Paths;
 import java.sql.*;
 
 @Component
+@Slf4j
 public class TranslationRepositoryImpl implements TranslationRepository {
     @Value("${datasource.url}")
     private String URL;
@@ -44,6 +46,7 @@ public class TranslationRepositoryImpl implements TranslationRepository {
         saveQuerySt.setString(4, request.text());
         saveQuerySt.setString(5, response.message());
         saveQuerySt.executeUpdate();
+        log.info("Saved to database: " + request + " " + response + " " + ip);
         saveQuerySt.close();
     }
     public void runSqlScript(String scriptFilePath) throws IOException, SQLException {
