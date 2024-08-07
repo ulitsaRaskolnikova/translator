@@ -67,7 +67,6 @@ public class YandexTranslateClient implements TranslatorClient {
         var sb = new StringBuilder();
         for (int i = 0; i < jsonArr.length(); i++) {
             sb.append(jsonArr.getJSONObject(i).getString("text"));
-            sb.append(" ");
         }
         return sb.toString();
     }
@@ -76,7 +75,7 @@ public class YandexTranslateClient implements TranslatorClient {
         translationJson.put("sourceLanguageCode", userRequest.sourceLang());
         translationJson.put("targetLanguageCode", userRequest.targetLang());
         translationJson.put("format", "PLAIN_TEXT");
-        translationJson.put("texts", userRequest.text().split(" +"));
+        translationJson.put("texts", new String[]{userRequest.text()});
         translationJson.put("folderId", FOLDER_ID);
         return translationJson.toString();
     }

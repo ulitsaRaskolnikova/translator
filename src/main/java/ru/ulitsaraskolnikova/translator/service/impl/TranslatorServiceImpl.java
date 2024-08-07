@@ -28,8 +28,7 @@ public class TranslatorServiceImpl implements TranslatorService {
     private final Semaphore semaphore = new Semaphore(MAX_COUNT_OF_THREADS);
     @Override
     public ResponseEntity<Response> service(Request request, String ip) {
-        String[] words = request.text().split("\\s+");
-
+        String[] words = request.text().strip().split(" +");
         List<Future<ResponseEntity<Response>>> futures = new ArrayList<>();
         for (String word : words) {
             Future<ResponseEntity<Response>> future = executorService.submit(() ->
@@ -52,7 +51,7 @@ public class TranslatorServiceImpl implements TranslatorService {
             sb.append(responseEntity.getBody().message());
             sb.append(" ");
         }
-        Response response = new Response(sb.toString());
+        Response response = new Response(sb.toString().strip());
         try {
             repository.init();
             repository.save(request, response, ip);
