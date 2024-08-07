@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import ru.ulitsaraskolnikova.translator.client.TranslatorClient;
 import ru.ulitsaraskolnikova.translator.model.Request;
 import ru.ulitsaraskolnikova.translator.model.Response;
+import ru.ulitsaraskolnikova.translator.repo.RepositoryConfiguration;
 import ru.ulitsaraskolnikova.translator.repo.TranslationRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,6 +22,8 @@ public class TranslatorServiceImplTest {
     private TranslatorServiceImpl translatorService;
     @Mock
     private TranslatorClient client;
+    @Mock
+    private RepositoryConfiguration repositoryConfiguration;
     @Mock
     private TranslationRepository repository;
     @Test

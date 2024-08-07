@@ -1,8 +1,9 @@
 package ru.ulitsaraskolnikova.translator.client.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,8 @@ import org.springframework.web.client.RestTemplate;
 import ru.ulitsaraskolnikova.translator.client.TranslatorClient;
 import ru.ulitsaraskolnikova.translator.model.Request;
 import ru.ulitsaraskolnikova.translator.model.Response;
+import ru.ulitsaraskolnikova.translator.model.YandexTranslateRequest;
+import ru.ulitsaraskolnikova.translator.model.YandexTranslateResponse;
 
 
 @Component
@@ -23,6 +26,7 @@ public class YandexTranslateClient implements TranslatorClient {
     private String TOKEN;
     @Value("${yandex.cloud.folder.id}")
     private String FOLDER_ID;
+    private final ObjectMapper objectMapper;
     @Override
     public ResponseEntity<Response> translate(Request request) {
         var restTemplate = new RestTemplate();
@@ -58,25 +62,40 @@ public class YandexTranslateClient implements TranslatorClient {
                 headers);
     }
     private String getMessageFromJson(String json) {
-        var jsonObject = new JSONObject(json);
-        return jsonObject.getString("message");
+        try {
+            var jsonNode = objectMapper.readTree(json);
+            return jsonNode.get("message").asText();
+        } catch (JsonProcessingException e) {
+            log.error(e.toString());
+            return e.getMessage();
+        }
     }
     private String getTranslationFromJson(String json) {
-        var jsonObject = new JSONObject(json);
-        var jsonArr = jsonObject.getJSONArray("translations");
+        YandexTranslateResponse response;
+        try {
+            response = objectMapper.readValue(json, YandexTranslateResponse.class);
+        } catch (JsonProcessingException e) {
+            return e.getMessage();
+        }
         var sb = new StringBuilder();
-        for (int i = 0; i < jsonArr.length(); i++) {
-            sb.append(jsonArr.getJSONObject(i).getString("text"));
+        for (var translation : response.translations()) {
+            sb.append(translation.text());
+            sb.append(" ");
         }
         return sb.toString();
     }
     private String createYandexJsonRequest(Request userRequest) {
-        var translationJson = new JSONObject();
-        translationJson.put("sourceLanguageCode", userRequest.sourceLang());
-        translationJson.put("targetLanguageCode", userRequest.targetLang());
-        translationJson.put("format", "PLAIN_TEXT");
-        translationJson.put("texts", new String[]{userRequest.text()});
-        translationJson.put("folderId", FOLDER_ID);
-        return translationJson.toString();
+        try {
+            return objectMapper.writeValueAsString(new YandexTranslateRequest(
+                    userRequest.sourceLang(),
+                    userRequest.targetLang(),
+                    "PLAIN_TEXT",
+                    new String[]{userRequest.text()},
+                    FOLDER_ID
+            ));
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+            return e.getMessage();
+        }
     }
 }

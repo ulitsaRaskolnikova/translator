@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.ulitsaraskolnikova.translator.model.Request;
 import ru.ulitsaraskolnikova.translator.model.Response;
+import ru.ulitsaraskolnikova.translator.repo.RepositoryConfiguration;
 import ru.ulitsaraskolnikova.translator.repo.TranslationRepository;
 import ru.ulitsaraskolnikova.translator.service.TranslatorService;
 import ru.ulitsaraskolnikova.translator.client.TranslatorClient;
@@ -22,6 +23,7 @@ import java.util.concurrent.*;
 @Slf4j
 public class TranslatorServiceImpl implements TranslatorService {
     private final TranslatorClient client;
+    private final RepositoryConfiguration repositoryConfiguration;
     private final TranslationRepository repository;
     private final int MAX_COUNT_OF_THREADS = 10;
     private final ExecutorService executorService = Executors.newFixedThreadPool(MAX_COUNT_OF_THREADS);
@@ -58,8 +60,8 @@ public class TranslatorServiceImpl implements TranslatorService {
         }
         Response response = new Response(sb.toString().strip());
         try {
-            repository.init();
-            repository.save(request, response, ip);
+            repositoryConfiguration.init();
+            repository.addTranslation(repositoryConfiguration.getConnection(), request, response, ip);
         } catch (ClassNotFoundException | SQLException | IOException e) {
             log.error(e.toString());
         }
